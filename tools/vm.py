@@ -951,7 +951,7 @@ class VM:
             "--exclude",
             "*.py~",
             "--include",
-            "artifacts/salt/*",
+            "artifacts/salt",
         ]
         if self.is_windows:
             # Symlinks aren't handled properly on windows, just replace the
