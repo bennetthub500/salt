@@ -23,8 +23,13 @@ jobs:
         run: |
           echo "deb http://deb.debian.org/debian buster-backports main" >> /etc/apt/sources.list
           apt-get update
-          apt-get install -y enchant git gcc make zlib1g-dev libc-dev libffi-dev g++ libxml2 libxml2-dev libxslt-dev libcurl4-openssl-dev libssl-dev libgnutls28-dev
+          apt-get install -y jq enchant git gcc make zlib1g-dev libc-dev libffi-dev g++ libxml2 libxml2-dev libxslt-dev libcurl4-openssl-dev libssl-dev libgnutls28-dev
           apt-get install -y git/buster-backports
+
+      - name: Show Event Details
+        run: |
+          cat $GITHUB_EVENT_PATH
+          jq -C "." $GITHUB_EVENT_PATH
 
       - uses: actions/checkout@v3
 

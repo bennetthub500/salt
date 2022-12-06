@@ -18,12 +18,24 @@ jobs:
       image: python:3.8.6-slim-buster
 
     steps:
+
       - name: Install System Deps
         run: |
           echo "deb http://deb.debian.org/debian buster-backports main" >> /etc/apt/sources.list
           apt-get update
-          apt-get install -y enchant git gcc imagemagick make zlib1g-dev libc-dev libffi-dev g++ libxml2 libxml2-dev libxslt-dev libcurl4-openssl-dev libssl-dev libgnutls28-dev xz-utils
+          apt-get install -y jq enchant git gcc imagemagick make zlib1g-dev libc-dev libffi-dev g++ libxml2 libxml2-dev libxslt-dev libcurl4-openssl-dev libssl-dev libgnutls28-dev xz-utils
           apt-get install -y git/buster-backports
+
+      - name: Show Event Details
+        run: |
+          cat $GITHUB_EVENT_PATH || true
+          echo ""
+          jq -C "." $GITHUB_EVENT_PATH || true
+          echo ""
+          echo '${{ toJSON(github) }}' > gh-context.json
+          cat gh-context.json || true
+          echo ""
+          jq -C "." gh-context.json || true
 
       - uses: actions/checkout@v3
         with:
