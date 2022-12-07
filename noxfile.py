@@ -360,7 +360,7 @@ def _install_coverage_requirement(session):
         )
 
 
-def _run_with_coverage(session, *test_cmd, env=None):
+def _run_with_coverage(session, *test_cmd, env=None, onedir=False):
     _install_coverage_requirement(session)
     session.run("coverage", "erase")
 
@@ -424,26 +424,35 @@ def _run_with_coverage(session, *test_cmd, env=None):
             # Sometimes some of the coverage files are corrupt which would trigger a CommandFailed
             # exception
             pass
-        # Generate report for tests code coverage
-        session.run(
-            "coverage",
-            "xml",
-            "-o",
-            str(COVERAGE_OUTPUT_DIR.joinpath("tests.xml").relative_to(REPO_ROOT)),
-            "--omit=salt/*",
-            "--include=tests/*",
-            env=coverage_base_env,
-        )
-        # Generate report for salt code coverage
-        session.run(
-            "coverage",
-            "xml",
-            "-o",
-            str(COVERAGE_OUTPUT_DIR.joinpath("salt.xml").relative_to(REPO_ROOT)),
-            "--omit=tests/*",
-            "--include=salt/*",
-            env=coverage_base_env,
-        )
+        try:
+            # Generate report for tests code coverage
+            session.run(
+                "coverage",
+                "xml",
+                "-o",
+                str(COVERAGE_OUTPUT_DIR.joinpath("tests.xml").relative_to(REPO_ROOT)),
+                "--omit=salt/*",
+                "--include=tests/*",
+                env=coverage_base_env,
+            )
+        except CommandFailed as exc:
+            if onedir is False:
+                raise exc from None
+
+        try:
+            # Generate report for salt code coverage
+            session.run(
+                "coverage",
+                "xml",
+                "-o",
+                str(COVERAGE_OUTPUT_DIR.joinpath("salt.xml").relative_to(REPO_ROOT)),
+                "--omit=tests/*",
+                "--include=salt/*",
+                env=coverage_base_env,
+            )
+        except CommandFailed as exc:
+            if onedir is False:
+                raise exc from None
 
 
 def _report_coverage(session):
@@ -981,7 +990,7 @@ def pytest_tornado(session, coverage):
     session.notify(session_name.replace("pytest-", "test-"))
 
 
-def _pytest(session, coverage, cmd_args, env=None):
+def _pytest(session, coverage, cmd_args, env=None, onedir=False):
     # Create required artifacts directories
     _create_ci_directories()
 
@@ -1031,6 +1040,7 @@ def _pytest(session, coverage, cmd_args, env=None):
             "pytest",
             *args,
             env=env,
+            onedir=onedir,
         )
     else:
         session.run("python", "-m", "pytest", *args, env=env)
@@ -1107,7 +1117,7 @@ def _ci_test(session, transport, onedir=False):
             ]
             + chunk_cmd
         )
-        _pytest(session, track_code_coverage, pytest_args, env=env)
+        _pytest(session, track_code_coverage, pytest_args, env=env, onedir=onedir)
     except CommandFailed:
         if rerun_failures is False:
             raise
@@ -1127,7 +1137,7 @@ def _ci_test(session, transport, onedir=False):
             ]
             + chunk_cmd
         )
-        _pytest(session, track_code_coverage, pytest_args, env=env)
+        _pytest(session, track_code_coverage, pytest_args, env=env, onedir=onedir)
 
 
 @nox.session(python=_PYTHON_VERSIONS, name="ci-test")
